@@ -18,7 +18,7 @@ client = TrellisApi(
 ```
 ## Quick start workflow, TODO: transform need to wait for extract on server
 ```
-proj_name = sample_project
+proj_name = "sample_project"
 client.assets.upload_assets(
             proj_name=proj_name,folder="sample_folder" # or pass in files = ["file_1", "file_2"] 
 )
