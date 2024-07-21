@@ -4,7 +4,7 @@ import datetime as dt
 import typing
 
 from ..core.datetime_utils import serialize_datetime
-from .get_transform_results_base_asset_fields import GetTransformResultsBaseAssetFields
+#from .get_transform_results_base_asset_fields import GetTransformResultsBaseAssetFields
 from .transform_status import TransformStatus
 
 try:
@@ -16,7 +16,7 @@ except ImportError:
 class GetTransformResultsResponse(pydantic.BaseModel):
     message: str
     transform_status: typing.Optional[TransformStatus]
-    data: typing.List[GetTransformResultsBaseAssetFields]
+    data: typing.List[typing.Dict[str, typing.Any]]
 
     def json(self, **kwargs: typing.Any) -> str:
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}

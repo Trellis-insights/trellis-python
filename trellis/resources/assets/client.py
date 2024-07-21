@@ -3,7 +3,7 @@
 import typing
 import urllib.parse
 from json.decoder import JSONDecodeError
-
+import os
 from ...core.api_error import ApiError
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.jsonable_encoder import jsonable_encoder
@@ -16,6 +16,7 @@ from ...types.delete_asset_response import DeleteAssetResponse
 from ...types.http_validation_error import HttpValidationError
 from ...types.order_by_enum import OrderByEnum
 from ...types.sort_order_enum import SortOrderEnum
+from pathlib import Path
 
 try:
     import pydantic.v1 as pydantic  # type: ignore
@@ -26,9 +27,13 @@ except ImportError:
 OMIT = typing.cast(typing.Any, ...)
 
 
+#TODO: the way ext_ids is defined
 class AssetsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
+    def _expand_user_path(self, path: str) -> Path:
+        """Expand user home directory symbol (~) and return as Path object."""
+        return Path(os.path.expanduser(path))
     def upload_assets(
         self,
         *,
@@ -37,14 +42,15 @@ class AssetsClient:
         ext_ids: typing.Optional[typing.List[str]] = None,
         chunk_strategy: typing.Optional[str] = None,
         ext_file_names: typing.Optional[typing.List[str]] = None,
-        files: typing.IO,
+        files: typing.Optional[typing.Union[str, typing.List[str], typing.List[typing.IO], typing.IO]] = None,
+        folder: typing.Optional[str] = None,
         urls: typing.Optional[typing.List[str]] = None,
         proj_name: str,
     ) -> AssetsResponse:
         """
-        Uploads files (PDFs or text files) and processes them according to their type, assigning them to a specified project within the Trellis platform.
+        Uploads files (PDFs or text files) or processes URLs, assigning them to a specified project within the Trellis platform.
 
-        This endpoint accepts multiple files along with their metadata, such as file type, external IDs, and external file names. It supports assigning the uploaded assets to an existing project or creating a new project based on the project name. The operation is designed to run asynchronously, allowing for the immediate response to the client while the heavy lifting is done in the background.
+        This endpoint accepts either multiple files along with their metadata or a list of URLs. It supports assigning the uploaded assets to an existing project or creating a new project based on the project name. The operation is designed to run asynchronously, allowing for the immediate response to the client while the heavy lifting is done in the background.
 
         Returns:
 
@@ -52,52 +58,110 @@ class AssetsClient:
 
         Raises:
 
+        - `ValueError`: If both files/folder and URLs are provided, or if neither are provided.
         - `HTTPException`: If there are issues with the file types or other parameters that violate the endpoint's constraints.
 
         Parameters:
             - file_type: typing.Optional[str].
-
             - file_types: typing.Optional[typing.List[str]].
-
             - ext_ids: typing.Optional[typing.List[str]].
-
             - chunk_strategy: typing.Optional[str].
-
             - ext_file_names: typing.Optional[typing.List[str]].
-
-            - files: typing.IO.
-
-            - urls: typing.Optional[typing.List[str]].
-
+            - files: typing.Optional[typing.Union[str, typing.List[str], typing.List[typing.IO], typing.IO]].
+                Can be a single file path, a list of file paths, a single file object, or a list of file objects.
+            - folder: typing.Optional[str]. Path to a folder containing files to upload.
+            - urls: typing.Optional[typing.List[str]]. List of URLs to process.
             - proj_name: str.
+
+        Note: You must provide either files/folder or URLs, but not both.
         ---
         from trellis.client import TrellisApi
 
         client = TrellisApi(
             api_key="YOUR_API_KEY",
         )
+        # Upload files:
         client.assets.upload_assets(
             proj_name="proj_name",
+            files="path/to/file.pdf"  # or ["path/to/file1.pdf", "path/to/file2.pdf"] or file_object or [file_object1, file_object2]
+            # alternatively, use folder="path/to/folder"
+        )
+        # Or process URLs:
+        client.assets.upload_assets(
+            proj_name="proj_name",
+            urls=["http://example.com/file1.pdf", "http://example.com/file2.pdf"]
         )
         """
+        files_to_upload = []
+
+        # Check for mutual exclusivity of files/folder and urls
+        if (files is not None or folder is not None) and urls is not None:
+            raise ValueError("Cannot provide both files/folder and URLs. Choose one method of input.")
+
+        if folder is not None:
+            folder_path = self._expand_user_path(folder)
+            if not folder_path.is_dir():
+                raise ValueError(f"Invalid folder path: {folder}")
+            for file_path in folder_path.glob("*"):
+                if file_path.is_file():
+                    files_to_upload.append(("files", open(file_path, "rb")))
+
+        elif files is not None:
+            if isinstance(files, str):
+                # Single file path
+                path = Path(files)
+                if path.is_file():
+                    files_to_upload.append(("files", open(path, "rb")))
+                else:
+                    raise ValueError(f"Invalid file path: {files}")
+            elif isinstance(files, list):
+                # List of file paths or file objects
+                for file in files:
+                    if isinstance(file, str):
+                        files_to_upload.append(("files", open(file, "rb")))
+                    elif hasattr(file, 'read'):
+                        files_to_upload.append(("files", file))
+                    else:
+                        raise ValueError(f"Invalid file type in list: {type(file)}")
+            elif hasattr(files, 'read'):
+                # Single file object
+                files_to_upload.append(("files", files))
+            else:
+                raise ValueError(f"Invalid files parameter type: {type(files)}")
+
+        if not files_to_upload and urls is None:
+            raise ValueError("No files or URLs provided for upload")
+            # Only include non-null fields in the request data
+        request_data = {
+            "proj_name": proj_name,  # proj_name is required, so always include it
+        }
+        if file_type:
+            request_data["file_type"] = file_type
+        if file_types:
+            request_data["file_types"] = file_types
+        if ext_ids :
+            request_data["ext_ids"] = ext_ids
+        if chunk_strategy:
+            request_data["chunk_strategy"] = chunk_strategy
+        if ext_file_names :
+            request_data["ext_file_names"] = ext_file_names
+        if urls:
+            request_data["urls"] = urls
+
         _response = self._client_wrapper.httpx_client.request(
             "POST",
             urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "v1/assets/upload"),
-            data=jsonable_encoder(
-                {
-                    "file_type": file_type,
-                    "file_types": file_types,
-                    "ext_ids": ext_ids,
-                    "chunk_strategy": chunk_strategy,
-                    "ext_file_names": ext_file_names,
-                    "urls": urls,
-                    "proj_name": proj_name,
-                }
-            ),
-            files={"files": files},
+            data=jsonable_encoder(request_data),
+            files=files_to_upload if files_to_upload else None,
             headers=self._client_wrapper.get_headers(),
             timeout=60,
         )
+
+        # Close file handles for files opened from paths
+        for _, file_obj in files_to_upload:
+            if hasattr(file_obj, 'close'):
+                file_obj.close()
+
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(AssetsResponse, _response.json())  # type: ignore
         if _response.status_code == 404:
@@ -109,7 +173,6 @@ class AssetsClient:
         except JSONDecodeError:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
-
     def get_assets(
         self,
         *,
