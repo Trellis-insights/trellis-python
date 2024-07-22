@@ -15,7 +15,7 @@ from ...types.delete_transform_response import DeleteTransformResponse
 from ...types.get_transform_reference_response import GetTransformReferenceResponse
 from ...types.get_transform_results_response import GetTransformResultsResponse
 from ...types.http_validation_error import HttpValidationError
-from ...types.initiate_transform_response import InitiateTransformResponse
+from ...types.create_transform_response import CreateTransformResponse
 from ...types.order_by_enum import OrderByEnum
 from ...types.re_run_transform_response import ReRunTransformResponse
 from ...types.sort_order_enum import SortOrderEnum
@@ -142,7 +142,7 @@ class TransformsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def run_transform_new_data(
+    def refresh_transform(
         self,
         transform_id: str,
         *,
@@ -175,7 +175,7 @@ class TransformsClient:
         client = TrellisApi(
             api_key="YOUR_API_KEY",
         )
-        client.transforms.run_transform_new_data(
+        client.transforms.refresh_transform(
             transform_id="transform_id",
         )
         """
@@ -465,7 +465,7 @@ class TransformsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def initiate_transform(
+    def create_transform(
         self,
         *,
         proj_name: str,
@@ -476,7 +476,7 @@ class TransformsClient:
         callback_url: typing.Optional[str] = OMIT,
         auth_key: typing.Optional[str] = OMIT,
         validation_params: typing.Optional[typing.List[ValidationParams]] = OMIT,
-    ) -> InitiateTransformResponse:
+    ) -> CreateTransformResponse:
         """
         Run the transformation defined in transformation params for all the assets in the project
 
@@ -509,7 +509,7 @@ class TransformsClient:
         client = TrellisApi(
             api_key="YOUR_API_KEY",
         )
-        client.transforms.initiate_transform(
+        client.transforms.create_transform(
             proj_name="proj_name",
             transform_params=TransformParams(
                 model="model",
@@ -545,7 +545,7 @@ class TransformsClient:
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(InitiateTransformResponse, _response.json())  # type: ignore
+            return pydantic.parse_obj_as(CreateTransformResponse, _response.json())  # type: ignore
         if _response.status_code == 404:
             raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 422:
@@ -665,7 +665,7 @@ class AsyncTransformsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def run_transform_new_data(
+    async def refresh_transform(
         self,
         transform_id: str,
         *,
@@ -698,7 +698,7 @@ class AsyncTransformsClient:
         client = AsyncTrellisApi(
             api_key="YOUR_API_KEY",
         )
-        await client.transforms.run_transform_new_data(
+        await client.transforms.refresh_transform(
             transform_id="transform_id",
         )
         """
@@ -988,7 +988,7 @@ class AsyncTransformsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    async def initiate_transform(
+    async def create_transform(
         self,
         *,
         proj_name: str,
@@ -999,7 +999,7 @@ class AsyncTransformsClient:
         callback_url: typing.Optional[str] = OMIT,
         auth_key: typing.Optional[str] = OMIT,
         validation_params: typing.Optional[typing.List[ValidationParams]] = OMIT,
-    ) -> InitiateTransformResponse:
+    ) -> CreateTransformResponse:
         """
         Run the transformation defined in transformation params for all the assets in the project
 
@@ -1032,7 +1032,7 @@ class AsyncTransformsClient:
         client = AsyncTrellisApi(
             api_key="YOUR_API_KEY",
         )
-        await client.transforms.initiate_transform(
+        await client.transforms.create_transform(
             proj_name="proj_name",
             transform_params=TransformParams(
                 model="model",
@@ -1068,7 +1068,7 @@ class AsyncTransformsClient:
             timeout=60,
         )
         if 200 <= _response.status_code < 300:
-            return pydantic.parse_obj_as(InitiateTransformResponse, _response.json())  # type: ignore
+            return pydantic.parse_obj_as(CreateTransformResponse, _response.json())  # type: ignore
         if _response.status_code == 404:
             raise NotFoundError(pydantic.parse_obj_as(typing.Any, _response.json()))  # type: ignore
         if _response.status_code == 422:

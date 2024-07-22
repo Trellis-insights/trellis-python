@@ -28,8 +28,8 @@ from .get_transforms_with_params_response import GetTransformsWithParamsResponse
 from .get_validation_param_response import GetValidationParamResponse
 from .get_validations_response import GetValidationsResponse
 from .http_validation_error import HttpValidationError
-from .initiate_transform_base_response import InitiateTransformBaseResponse
-from .initiate_transform_response import InitiateTransformResponse
+from .create_transform_base_response import CreateTransformBaseResponse
+from .create_transform_response import CreateTransformResponse
 from .insert_validation_param_response import InsertValidationParamResponse
 from .log_level_enum import LogLevelEnum
 from .order_by_enum import OrderByEnum
@@ -85,8 +85,8 @@ __all__ = [
     "GetValidationParamResponse",
     "GetValidationsResponse",
     "HttpValidationError",
-    "InitiateTransformBaseResponse",
-    "InitiateTransformResponse",
+    "CreateTransformBaseResponse",
+    "CreateTransformResponse",
     "InsertValidationParamResponse",
     "LogLevelEnum",
     "OrderByEnum",
