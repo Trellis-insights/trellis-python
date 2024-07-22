@@ -4,7 +4,7 @@ import datetime as dt
 import typing
 
 from ..core.datetime_utils import serialize_datetime
-from .initiate_transform_base_response import InitiateTransformBaseResponse
+from .create_transform_base_response import CreateTransformBaseResponse
 
 try:
     import pydantic.v1 as pydantic  # type: ignore
@@ -12,9 +12,9 @@ except ImportError:
     import pydantic  # type: ignore
 
 
-class InitiateTransformResponse(pydantic.BaseModel):
+class CreateTransformResponse(pydantic.BaseModel):
     message: str
-    data: InitiateTransformBaseResponse
+    data: CreateTransformBaseResponse
 
     def json(self, **kwargs: typing.Any) -> str:
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}

@@ -26,7 +26,7 @@ client.assets_extract.extract_files(proj_name=proj_name)
 operations = client.transforms.generate_autoschema(
             proj_name=proj_name,
         ).data
-transform_id = client.transforms.initiate_transform(
+transform_id = client.transforms.create_transform(
             proj_name=proj_name,
             transform_params=TransformParams(
                 model="trellis-enterprise",

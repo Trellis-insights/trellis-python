@@ -11,7 +11,7 @@ except ImportError:
     import pydantic  # type: ignore
 
 
-class InitiateTransformBaseResponse(pydantic.BaseModel):
+class CreateTransformBaseResponse(pydantic.BaseModel):
     transform_id: str
 
     def json(self, **kwargs: typing.Any) -> str:
